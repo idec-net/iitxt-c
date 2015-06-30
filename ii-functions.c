@@ -105,8 +105,10 @@ struct message getMsg(char* msgid) {
 	nextstr=strtok(NULL, "\n");
 	result.subj=(nextstr!=NULL)?nextstr:"";
 	
-	// not implemented
-
+	/* not implemented
+	 	todo: добавить выделение памяти, дабы избежать переполнения
+	 	ну ещё сделать парсинг самого сообщения (опять же, с памятью проверить)
+	*/
 	return result;
 }
 
