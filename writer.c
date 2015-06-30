@@ -64,12 +64,12 @@ int main (int argc, char** argv) {
 	}
 	
 	char* echoarea=argv[1];
-	struct msglist msgids=getLocalEcho(echoarea);
 
 	if (argc==2) {
 		writeNew(echoarea);
 	} else {
 		int number=0;
+		struct msglist msgids=getLocalEcho(echoarea);
 		sscanf(argv[2], "%d", &number);
 		assert(number>=0 && number<=((msgids.length)-1));
 		

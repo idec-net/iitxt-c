@@ -100,7 +100,7 @@ int fetch_messages (char* adress, char** echoesToFetch, int echoesCount) {
 				for (j=0; j<divideCount; j++) {
 					for (a=0; a<bundle_maxsize; a++) {
 						// и здесь тоже
-						if (j*a>) break;
+						if (j*bundle_maxsize+a==difference.size) break;
 						printf ("%d\n", divided[j][a]);
 					}
 				}
