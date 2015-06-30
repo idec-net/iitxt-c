@@ -2,15 +2,39 @@
 #include "ii-functions.c"
 
 char adress[]="http://ii-net.tk/ii/ii-point.php?q=/";
-static int i;
+int bundle_maxsize=20;
 
-int fetch_messages (char* adress, char** echoesToFetch, int echoesCount) {
-	int echoesArray_length=0;
+static int i, j;
 
-	for (i=0; i<echoesCount; i++) {
-		echoesArray_length+=strlen(echoesToFetch[i]);
+struct intarr {
+	int* numbers;
+	int size;
+};
+
+struct intarr messages_difference(struct msglist first, struct msglist second) {
+	int* indexes=NULL;
+	int count=0, j, a, found;
+
+	for (j=0;j<first.length;j++) {
+		found=0;
+		for (a=0; a<second.length; a++) {
+			if (strcmp(first.index[j], second.index[a])==0) {
+				found=1;
+				break;
+			}
+		}
+		if (found!=1) {
+			count++;
+			indexes=realloc(indexes, sizeof(int)*count);
+			indexes[count-1]=j;
+		}
 	}
 
+	struct intarr result = { indexes, count };
+	return result;
+}
+
+int fetch_messages (char* adress, char** echoesToFetch, int echoesCount) {
 	char* server_msglist_request;
 	
 	for (i=0; i<echoesCount; i++) {
@@ -38,10 +62,49 @@ int fetch_messages (char* adress, char** echoesToFetch, int echoesCount) {
 		
 		char* bundle_echoarea=strtok(raw_echobundle, "\n");
 		if (bundle_echoarea!=NULL) {
-			int ea_textsize=strlen(bundle_echoarea)+1;
-			int remote_msglist_size=cache_size-ea_textsize;
+			struct msglist remote_msglist;
+			remote_msglist.index=(char**)malloc(sizeof(char*));
 
-			// todo: дальше парсим айдишники в структуру msglist
+			char* nextmessage;
+
+			remote_msglist.length=0;
+			while ((nextmessage=strtok(NULL, "\n"))!=NULL) {
+				remote_msglist.index=(char**)realloc(remote_msglist.index, sizeof(char*)*(remote_msglist.length+1));
+				
+				remote_msglist.index[remote_msglist.length]=(char*)malloc(sizeof(char)*21);
+				strcpy(remote_msglist.index[remote_msglist.length++], nextmessage);
+			}
+
+			struct msglist local_msglist=getLocalEcho(bundle_echoarea);
+			struct intarr difference=messages_difference(remote_msglist, local_msglist);
+
+			if (difference.size>0) {
+				int divideCount;
+				if (difference.size<=bundle_maxsize) {
+					divideCount=1;
+				} else {
+					if (difference.size%bundle_maxsize==0) divideCount=difference.size/bundle_maxsize;
+					else divideCount=difference.size/bundle_maxsize+1;
+				}
+				
+				int a;
+				int** divided=(int**)malloc(sizeof(int*)*divideCount);
+				for (j=0; j<divideCount; j++) {
+					divided[j]=(int*)malloc(sizeof(int)*bundle_maxsize);
+					for (a=0; a<bundle_maxsize; a++) {
+						if (divideCount*bundle_maxsize+a == difference.size) break;
+						divided[j][a]=difference.numbers[j*bundle_maxsize+a];
+						// а вот здесь надо ещё посидеть и разобраться
+					}
+				}
+				for (j=0; j<divideCount; j++) {
+					for (a=0; a<bundle_maxsize; a++) {
+						// и здесь тоже
+						if (j*a>) break;
+						printf ("%d\n", divided[j][a]);
+					}
+				}
+			}
 		}
 		
 		free(server_msglist_request);

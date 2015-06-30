@@ -20,8 +20,8 @@ struct msglist getLocalEcho(char* echofname) {
 	char** p;
 
 	if (!file) {
-		printf("Не могу прочитать файл %s\n", echofile);
-		exit(1);
+		printf("W: Не могу прочитать файл %s\n", echofile);
+		return (struct msglist){ NULL, 0 };
 	}
 	int size=fsize(echofile);
 	int echocount=size/21;

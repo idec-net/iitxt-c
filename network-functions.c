@@ -17,6 +17,7 @@ int getFile(char* request, FILE* outfile) {
 	}
 
 	curl_easy_setopt(curl, CURLOPT_URL, request);
+	printf("fetch %s\n", request);
 	
 	if (outfile!=NULL) {
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
