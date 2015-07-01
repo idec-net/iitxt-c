@@ -1,5 +1,5 @@
-CC="gcc"
-CFLAGS="-ggdb"
+CC=gcc
+CFLAGS=-ggdb
 
 all:
 	${CC} ${CFLAGS} viewer.c -o viewer

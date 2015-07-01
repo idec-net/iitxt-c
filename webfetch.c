@@ -1,3 +1,4 @@
+#include <unistd.h>
 #include "network-functions.c"
 #include "ii-functions.c"
 
@@ -35,21 +36,41 @@ struct intarr messages_difference(struct msglist first, struct msglist second) {
 }
 
 void saveBundle (char* echoarea, char* raw_bundle) {
-	/* берём raw_bundle построчно
-	 	затем у каждой строки берём msgid и проверяем, есть ли такой файл в msg/
-			если нет, то пытаемся прочесть base64 сообщение
-			(опционально) если не пусто, то расшифровываем и сохраняем
-	*/
 	char* nextline=strtok(raw_bundle, "\n");
 	char* next_part;
 
 	while (nextline!=NULL) {
 		next_part=strtok(nextline, ":");
 		if (next_part!=NULL) {
-			// вроде бы, msgid у нас есть. Проверяем ФС на наличие файла
-			printf ("%s\n", next_part);
+			char fname[80]="msg/";
+			strcat(fname, next_part);
+			char* msgid=next_part;
+
+			if (access(fname, F_OK)!=-1) {
+				printf("E: Файл %s уже существует!\n", fname);
+			} else {
+				if((next_part=strtok(NULL, ":"))!=NULL) {
+					// расшифровываем base64 и сохраняем бандл
+					// увы, содержимое этого блока - жуткий костыль =(
+					FILE *b64cache=fopen("nextmessage", "w+");
+					fwrite(next_part, strlen(next_part), 1, b64cache);
+					rewind(b64cache);
+					FILE *message=fopen(fname, "w");
+					decode(b64cache, message);
+
+					fclose(b64cache);
+					fclose(message);
+					char echofile[80]="echo/";
+					strcat(echofile, echoarea);
+					FILE* echo=fopen(echofile, "a");
+					fwrite(msgid, strlen(msgid), 1, echo);
+					fwrite("\n", 1, 1, echo);
+					fclose(echo);
+				} else {
+					printf("E: бандл %s повреждён\n", msgid);
+				}
+			}
 		}
-		
 		nextline=strtok(NULL, "\n");
 	}
 }

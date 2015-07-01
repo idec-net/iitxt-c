@@ -49,7 +49,7 @@ int main(int argc, char** argv) {
 	}
 
 	for (i=start;i<=end;i++) {
-		printf("msgid: %s\n", buf.index[i]);
+		printf("n=%d; msgid: %s\n", i, buf.index[i]);
 
 		rawmsg=getRawMsg(buf.index[i]);
 		printf("%s\n\n", rawmsg);
