@@ -2,6 +2,7 @@ CC=gcc
 CFLAGS=-ggdb
 
 all:
+	mkdir -p echo msg out
 	${CC} ${CFLAGS} viewer.c -o viewer
 	${CC} ${CFLAGS} writer.c -o writer
 	${CC} ${CFLAGS} sender.c -o sender -lcurl
