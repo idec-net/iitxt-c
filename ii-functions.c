@@ -12,46 +12,34 @@ int fsize(char *name) {
 	return st.st_size;
 }
 
-struct msglist getLocalEcho(char* echofname) {
+struct msglist getLocalEcho(char* echoarea) {
 	// эта функция меня смущает. Хотя она была написана самой первой в клиенте =)
-	// надо переписать с использованием realloc и strtok (потому что, вероятно, тут идёт выход за 21 символ, а из-за этого бывают сегфолты)
 	
 	char echofile[80]="echo/";
-	strcat(echofile, echofname);
+	strcat(echofile, echoarea);
 
 	FILE *file=fopen(echofile, "r");
-	char** p;
 
 	if (!file) {
 		printf("W: Не могу прочитать файл %s\n", echofile);
 		return (struct msglist){ NULL, 0 };
 	}
 	int size=fsize(echofile);
-	int echocount=size/21;
-	p=(char**)malloc(sizeof(char*)*echocount);
+	int echocount=0;
 
-	int i;
+	char* filestring=(char*)malloc(sizeof(char)*size);
+	fread(filestring, size, 1, file);
+	fclose(file);
 
-	for (i=0; i<echocount; i++) {
-		p[i]=(char*)malloc(sizeof(char)*21);
-	}
+	char** p=NULL;
+	char* nextmsgid=strtok(filestring, "\n");
 
-	char c;
-	// i is current number of lines
-	i=0;
-	int n=0; // symbol
-	while(c=fgetc(file)) {
-		if (c==EOF) break;
-		if (c!='\n') {
-			p[i][n++]=c;
-		} else {
-			p[i][n]='\0';
-			i++;
-			n=0;
-		}
+	while(nextmsgid!=NULL) {
+		p=(char**)realloc(p, sizeof(char*)*(echocount+1));
+		p[echocount++]=nextmsgid;
+		nextmsgid=strtok(NULL, "\n");
 	}
 	
-	fclose(file);
 	struct msglist result = {p, echocount};
 	return result;
 }

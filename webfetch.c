@@ -138,14 +138,16 @@ int fetch_messages (char* adress, char** echoesToFetch, int echoesCount) {
 						divided[j][a]=difference.numbers[j*bundle_maxsize+a];
 					}
 				}
+				char* server_bundle_request;
 				for (j=0; j<divideCount; j++) {
-					// for (a=0; a<bundle_maxsize; a++) {
-					//	if (j*bundle_maxsize+a==difference.size) break;
-					//	printf ("%d\n", divided[j][a]);
-					// }
+					for (a=0; a<bundle_maxsize; a++) {
+						if (j*bundle_maxsize+a==difference.size) break;
+						printf ("%d\n", divided[j][a]);
+					}
+					exit(1);
 					a=(difference.size-j*bundle_maxsize < bundle_maxsize) ? difference.size-j*bundle_maxsize : bundle_maxsize;
 
-					char* server_bundle_request=(char*)malloc(sizeof(char)*(strlen(adress)+22*a));
+					server_bundle_request=(char*)malloc(sizeof(char)*(strlen(adress)+22*a));
 					// в предыдущей строке, вероятно, может быть утечка
 
 					strcpy(server_bundle_request, adress);
