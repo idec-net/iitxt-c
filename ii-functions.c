@@ -13,6 +13,9 @@ int fsize(char *name) {
 }
 
 struct msglist getLocalEcho(char* echofname) {
+	// эта функция меня смущает. Хотя она была написана самой первой в клиенте =)
+	// надо переписать с использованием realloc и strtok (потому что, вероятно, тут идёт выход за 21 символ, а из-за этого бывают сегфолты)
+	
 	char echofile[80]="echo/";
 	strcat(echofile, echofname);
 

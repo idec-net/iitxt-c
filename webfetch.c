@@ -34,6 +34,26 @@ struct intarr messages_difference(struct msglist first, struct msglist second) {
 	return result;
 }
 
+void saveBundle (char* echoarea, char* raw_bundle) {
+	/* берём raw_bundle построчно
+	 	затем у каждой строки берём msgid и проверяем, есть ли такой файл в msg/
+			если нет, то пытаемся прочесть base64 сообщение
+			(опционально) если не пусто, то расшифровываем и сохраняем
+	*/
+	char* nextline=strtok(raw_bundle, "\n");
+	char* next_part;
+
+	while (nextline!=NULL) {
+		next_part=strtok(nextline, ":");
+		if (next_part!=NULL) {
+			// вроде бы, msgid у нас есть. Проверяем ФС на наличие файла
+			printf ("%s\n", next_part);
+		}
+		
+		nextline=strtok(NULL, "\n");
+	}
+}
+
 int fetch_messages (char* adress, char** echoesToFetch, int echoesCount) {
 	char* server_msglist_request;
 	
@@ -87,6 +107,7 @@ int fetch_messages (char* adress, char** echoesToFetch, int echoesCount) {
 					else divideCount=difference.size/bundle_maxsize+1;
 				}
 				
+				// 2 следующих цикла отвечают за разделение запросов по 20 сообщений и их выполнение О_о
 				int a;
 				int** divided=(int**)malloc(sizeof(int*)*divideCount);
 				for (j=0; j<divideCount; j++) {
@@ -103,7 +124,7 @@ int fetch_messages (char* adress, char** echoesToFetch, int echoesCount) {
 					// }
 					a=(difference.size-j*bundle_maxsize < bundle_maxsize) ? difference.size-j*bundle_maxsize : bundle_maxsize;
 
-					char* server_bundle_request=(char*)malloc(sizeof(char)*(strlen(adress)+21*a+a));
+					char* server_bundle_request=(char*)malloc(sizeof(char)*(strlen(adress)+22*a));
 					// в предыдущей строке, вероятно, может быть утечка
 
 					strcpy(server_bundle_request, adress);
@@ -113,7 +134,7 @@ int fetch_messages (char* adress, char** echoesToFetch, int echoesCount) {
 						if (j*bundle_maxsize+a==difference.size) break;
 						
 						strcat(server_bundle_request, "/");
-						strcat(server_bundle_request, remote_msglist.index[divided[j][a]]);
+						strcat(server_bundle_request, remote_msglist.index[ divided[j][a] ]);
 					}
 					// здесь опять будет *что-то
 					
@@ -123,8 +144,15 @@ int fetch_messages (char* adress, char** echoesToFetch, int echoesCount) {
 					} else {
 						// скачиваем бандл сообщений
 						int gotBundle=getFile(server_bundle_request, bundle_cached);
-
+						
+						int bundle_cache_size=ftell(bundle_cached);
+						rewind(bundle_cached); // опять подготовка к чтению (идём к началу)
+		
+						char* raw_bundle=(char*)malloc(bundle_cache_size);
+						fread(raw_bundle, bundle_cache_size, 1, bundle_cached); // friendship^Wfread is magic
 						fclose(bundle_cached);
+						
+						saveBundle(bundle_echoarea, raw_bundle); // а эта функция распарсит бандл и попытается сохранить
 					}
 					free (server_bundle_request);
 				}
