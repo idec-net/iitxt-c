@@ -94,20 +94,42 @@ int fetch_messages (char* adress, char** echoesToFetch, int echoesCount) {
 					for (a=0; a<bundle_maxsize; a++) {
 						if (divideCount*bundle_maxsize+a == difference.size) break;
 						divided[j][a]=difference.numbers[j*bundle_maxsize+a];
-						// а вот здесь надо ещё посидеть и разобраться
 					}
 				}
 				for (j=0; j<divideCount; j++) {
+					// for (a=0; a<bundle_maxsize; a++) {
+					//	if (j*bundle_maxsize+a==difference.size) break;
+					//	printf ("%d\n", divided[j][a]);
+					// }
+					a=(difference.size-j*bundle_maxsize < bundle_maxsize) ? difference.size-j*bundle_maxsize : bundle_maxsize;
+
+					char* server_bundle_request=(char*)malloc(sizeof(char)*(strlen(adress)+21*a+a));
+					// в предыдущей строке, вероятно, может быть утечка
+
+					strcpy(server_bundle_request, adress);
+					strcat(server_bundle_request, "u/m");
+
 					for (a=0; a<bundle_maxsize; a++) {
-						// и здесь тоже
 						if (j*bundle_maxsize+a==difference.size) break;
-						printf ("%d\n", divided[j][a]);
+						
+						strcat(server_bundle_request, "/");
+						strcat(server_bundle_request, remote_msglist.index[divided[j][a]]);
 					}
+					// здесь опять будет *что-то
+					
+					FILE *bundle_cached=fopen("cache-bundle", "w+");
+					if (!bundle_cached) {
+						printf("%s\n", "Не могу открыть файл кэша бандла");
+					} else {
+						// скачиваем бандл сообщений
+						int gotBundle=getFile(server_bundle_request, bundle_cached);
+
+						fclose(bundle_cached);
+					}
+					free (server_bundle_request);
 				}
 			}
 		}
-		
-		free(server_msglist_request);
 	}
 }
 

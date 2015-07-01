@@ -1,8 +1,11 @@
+CC="gcc"
+CFLAGS="-ggdb"
+
 all:
-	gcc -ggdb viewer.c -o viewer
-	gcc -ggdb writer.c -o writer
-	gcc -ggdb sender.c -o sender -lcurl
-	gcc -ggdb webfetch.c -o webfetch -lcurl
+	${CC} ${CFLAGS} viewer.c -o viewer
+	${CC} ${CFLAGS} writer.c -o writer
+	${CC} ${CFLAGS} sender.c -o sender -lcurl
+	${CC} ${CFLAGS} webfetch.c -o webfetch -lcurl
 
 clean:
 	rm -f viewer writer sender webfetch
