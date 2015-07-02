@@ -7,13 +7,8 @@ int bundle_maxsize=20;
 
 static int i, j;
 
-struct intarr {
-	int* numbers;
-	int size;
-};
-
-struct intarr messages_difference(struct msglist first, struct msglist second) {
-	int* indexes=NULL;
+struct msglist messages_difference(struct msglist first, struct msglist second) {
+	char** index=NULL;
 	int count=0, j, a, found;
 
 	for (j=0;j<first.length;j++) {
@@ -25,13 +20,12 @@ struct intarr messages_difference(struct msglist first, struct msglist second) {
 			}
 		}
 		if (found!=1) {
-			count++;
-			indexes=realloc(indexes, sizeof(int)*count);
-			indexes[count-1]=j;
+			index=(char**)realloc(index, sizeof(char*)*(count+1));
+			index[count++]=first.index[j];
 		}
 	}
 
-	struct intarr result = { indexes, count };
+	struct msglist result = { index, count };
 	return result;
 }
 
@@ -40,6 +34,7 @@ void saveBundle (char* echoarea, char* raw_bundle) {
 	char* next_part;
 
 	while (nextline!=NULL) {
+		printf ("Мы здесь");
 		next_part=strtok(nextline, ":");
 		if (next_part!=NULL) {
 			char fname[80]="msg/";
@@ -117,49 +112,33 @@ int fetch_messages (char* adress, char** echoesToFetch, int echoesCount) {
 			}
 
 			struct msglist local_msglist=getLocalEcho(bundle_echoarea);
-			struct intarr difference=messages_difference(remote_msglist, local_msglist);
+			struct msglist difference=messages_difference(remote_msglist, local_msglist);
 
-			if (difference.size>0) {
+			if (difference.length>0) {
 				int divideCount;
-				if (difference.size<=bundle_maxsize) {
+				if (difference.length<=bundle_maxsize) {
 					divideCount=1;
 				} else {
-					if (difference.size%bundle_maxsize==0) divideCount=difference.size/bundle_maxsize;
-					else divideCount=difference.size/bundle_maxsize+1;
+					if (difference.length%bundle_maxsize==0) divideCount=difference.length/bundle_maxsize;
+					else divideCount=difference.length/bundle_maxsize+1;
 				}
 				
-				// 2 следующих цикла отвечают за разделение запросов по 20 сообщений и их выполнение О_о
-				int a;
-				int** divided=(int**)malloc(sizeof(int*)*divideCount);
-				for (j=0; j<divideCount; j++) {
-					divided[j]=(int*)malloc(sizeof(int)*bundle_maxsize);
-					for (a=0; a<bundle_maxsize; a++) {
-						if (divideCount*bundle_maxsize+a == difference.size) break;
-						divided[j][a]=difference.numbers[j*bundle_maxsize+a];
-					}
-				}
+				// следующий цикл отвечает за разделение запросов по 20 сообщений и их выполнение О_о
 				char* server_bundle_request;
+				int a;
 				for (j=0; j<divideCount; j++) {
-					for (a=0; a<bundle_maxsize; a++) {
-						if (j*bundle_maxsize+a==difference.size) break;
-						printf ("%d\n", divided[j][a]);
-					}
-					exit(1);
-					a=(difference.size-j*bundle_maxsize < bundle_maxsize) ? difference.size-j*bundle_maxsize : bundle_maxsize;
-
-					server_bundle_request=(char*)malloc(sizeof(char)*(strlen(adress)+22*a));
+					server_bundle_request=(char*)malloc(sizeof(char)*(strlen(adress)+3+bundle_maxsize*22));
 					// в предыдущей строке, вероятно, может быть утечка
 
 					strcpy(server_bundle_request, adress);
 					strcat(server_bundle_request, "u/m");
 
 					for (a=0; a<bundle_maxsize; a++) {
-						if (j*bundle_maxsize+a==difference.size) break;
+						if (j*bundle_maxsize+a==difference.length) break;
 						
 						strcat(server_bundle_request, "/");
-						strcat(server_bundle_request, remote_msglist.index[ divided[j][a] ]);
+						strcat(server_bundle_request, difference.index[j*bundle_maxsize+a]);
 					}
-					// здесь опять будет *что-то
 					
 					FILE *bundle_cached=fopen("cache-bundle", "w+");
 					if (!bundle_cached) {
