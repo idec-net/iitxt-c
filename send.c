@@ -5,7 +5,6 @@
 // toss file format is raw msgline, NOT base64
 
 char authstr[]="your_authstr";
-char adress[]="http://ii-net.tk/ii/ii-point.php?q=/u/point";
 
 char** dirs;
 DIR *tossesdir;
@@ -20,6 +19,7 @@ int comp(const void *a, const void *b) {
 }
 
 int main() {
+	strcat(adress, "u/point");
 	tossesdir=opendir("out/");
 	dirs=(char**)malloc(sizeof(char*)*512);
 

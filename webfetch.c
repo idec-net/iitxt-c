@@ -2,7 +2,6 @@
 #include "network-functions.c"
 #include "ii-functions.c"
 
-char adress[]="http://ii-net.tk/ii/ii-point.php?q=/";
 int bundle_maxsize=20;
 
 static int i, j;

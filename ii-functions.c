@@ -6,6 +6,8 @@
 #include "ii.h"
 #include "b64.c"
 
+char adress[100]="http://ii-net.tk/ii/ii-point.php?q=/";
+
 int fsize(char *name) {
 	struct stat st;
 	stat(name, &st);
