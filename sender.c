@@ -50,7 +50,7 @@ int main() {
 		
 		int size1=fsize(tossfname);
 
-		char* rawtext=(char*)malloc(sizeof(char)*size1);
+		char* rawtext=(char*)malloc(size1+1);
 		fread(rawtext, size1, 1, f);
 		fclose(f);
 		
