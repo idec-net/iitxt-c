@@ -8,7 +8,7 @@ static size_t write_data(void *ptr, size_t size, size_t nmemb, void *stream) {
 	return written;
 }
 
-int getFile(char* request, FILE* outfile) {
+int getFile(char* request, FILE* outfile, char* postdata) {
 	curl=curl_easy_init();
 
 	if (!curl) {
@@ -22,6 +22,9 @@ int getFile(char* request, FILE* outfile) {
 	if (outfile!=NULL) {
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, outfile);
+	}
+	if (postdata!=NULL) {
+		curl_easy_setopt(curl, CURLOPT_POSTFIELDS, postdata);
 	}
 	
 	res=curl_easy_perform(curl);

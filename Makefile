@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-ggdb
+CFLAGS=-ggdb -std=c11
 
 all:
 	mkdir -p echo msg out

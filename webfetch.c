@@ -36,7 +36,6 @@ void saveBundle (char* echoarea, char* raw_bundle) {
 	char* nextline=strtok(raw_bundle, "\n");
 	
 	while (nextline!=NULL) {
-		printf ("Мы здесь");
 		if ((strstr(nextline, ":"))!=NULL) {
 			lines=(char**)realloc(lines, sizeof(char*)*(linescount+1));
 			lines[linescount++]=nextline;
@@ -97,9 +96,9 @@ int fetch_messages (char* adress, char** echoesToFetch, int echoesCount) {
 			exit(1);
 		}
 	
-		int gotEcho=getFile(server_msglist_request, cached);
+		int gotEcho=getFile(server_msglist_request, cached, NULL);
 		
-		int cache_size=ftell(cached);
+		int cache_size=ftell(cached)-1;
 		rewind(cached); // Сейчас читать будем
 		
 		char* raw_echobundle=(char*)malloc(cache_size);
@@ -155,7 +154,7 @@ int fetch_messages (char* adress, char** echoesToFetch, int echoesCount) {
 						printf("%s\n", "Не могу открыть файл кэша бандла");
 					} else {
 						// скачиваем бандл сообщений
-						int gotBundle=getFile(server_bundle_request, bundle_cached);
+						int gotBundle=getFile(server_bundle_request, bundle_cached, NULL);
 						
 						int bundle_cache_size=ftell(bundle_cached);
 						rewind(bundle_cached); // опять подготовка к чтению (идём к началу)

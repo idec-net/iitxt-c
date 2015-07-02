@@ -62,7 +62,7 @@ int main() {
 		strcat(request, "&pauth=");
 		strcat(request, authstr);
 		
-		result=getFile(adress, NULL);
+		result=getFile(adress, NULL, request);
 		printf(" %s: %d\n", tossfname, result);
 		
 		if(result == 0) {

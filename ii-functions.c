@@ -24,10 +24,10 @@ struct msglist getLocalEcho(char* echoarea) {
 		printf("W: Не могу прочитать файл %s\n", echofile);
 		return (struct msglist){ NULL, 0 };
 	}
-	int size=fsize(echofile);
+	int size=fsize(echofile)-1;
 	int echocount=0;
 
-	char* filestring=(char*)malloc(sizeof(char)*size);
+	char* filestring=(char*)malloc(size);
 	fread(filestring, size, 1, file);
 	fclose(file);
 
