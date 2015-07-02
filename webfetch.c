@@ -30,43 +30,53 @@ struct msglist messages_difference(struct msglist first, struct msglist second) 
 }
 
 void saveBundle (char* echoarea, char* raw_bundle) {
-	char* nextline=strtok(raw_bundle, "\n");
-	char* next_part;
+	char** lines=NULL;
+	int linescount=0, i;
 
+	char* nextline=strtok(raw_bundle, "\n");
+	
 	while (nextline!=NULL) {
 		printf ("Мы здесь");
-		next_part=strtok(nextline, ":");
-		if (next_part!=NULL) {
-			char fname[80]="msg/";
-			strcat(fname, next_part);
-			char* msgid=next_part;
-
-			if (access(fname, F_OK)!=-1) {
-				printf("E: Файл %s уже существует!\n", fname);
-			} else {
-				if((next_part=strtok(NULL, ":"))!=NULL) {
-					// расшифровываем base64 и сохраняем бандл
-					// увы, содержимое этого блока - жуткий костыль =(
-					FILE *b64cache=fopen("nextmessage", "w+");
-					fwrite(next_part, strlen(next_part), 1, b64cache);
-					rewind(b64cache);
-					FILE *message=fopen(fname, "w");
-					decode(b64cache, message);
-
-					fclose(b64cache);
-					fclose(message);
-					char echofile[80]="echo/";
-					strcat(echofile, echoarea);
-					FILE* echo=fopen(echofile, "a");
-					fwrite(msgid, strlen(msgid), 1, echo);
-					fwrite("\n", 1, 1, echo);
-					fclose(echo);
-				} else {
-					printf("E: бандл %s повреждён\n", msgid);
-				}
-			}
+		if ((strstr(nextline, ":"))!=NULL) {
+			lines=(char**)realloc(lines, sizeof(char*)*(linescount+1));
+			lines[linescount++]=nextline;
+		} else {
+			// printf ("бандл не содержит ':'\n");
 		}
 		nextline=strtok(NULL, "\n");
+	}
+	
+	for (i=0;i<linescount;i++) {
+		char fname[80]="msg/";
+		char* next_part=strtok(lines[i], ":");
+		char* msgid=next_part;
+
+		strcat(fname, next_part);
+
+		if (access(fname, F_OK)!=-1) {
+			printf("E: Файл %s уже существует!\n", fname);
+		} else {
+			if((next_part=strtok(NULL, ":"))!=NULL) {
+				// расшифровываем base64 и сохраняем бандл
+				// увы, содержимое этого блока - жуткий костыль =(
+				FILE *b64cache=fopen("nextmessage", "w+");
+				fwrite(next_part, strlen(next_part), 1, b64cache);
+				rewind(b64cache);
+				FILE *message=fopen(fname, "w");
+				decode(b64cache, message);
+
+				fclose(b64cache);
+				fclose(message);
+				char echofile[80]="echo/";
+				strcat(echofile, echoarea);
+				FILE* echo=fopen(echofile, "a");
+				fwrite(msgid, strlen(msgid), 1, echo);
+				fwrite("\n", 1, 1, echo);
+				fclose(echo);
+			} else {
+				printf("E: бандл %s повреждён\n", msgid);
+			}
+		}
 	}
 }
 
@@ -168,8 +178,8 @@ int main() {
 	myEchoes[0]=(char*)malloc(sizeof(char)*30);
 	myEchoes[1]=(char*)malloc(sizeof(char)*30);
 
-	strcpy(myEchoes[0], "ii.test.14");
-	strcpy(myEchoes[1], "mlp.15");
+	strcpy(myEchoes[0], "mlp.15");
+	strcpy(myEchoes[1], "ii.test.14");
 	
 	int fetched=fetch_messages(&adress[0], myEchoes, 2);
 }
