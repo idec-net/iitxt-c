@@ -117,20 +117,20 @@ int savemsg(char* msgid, char* echo, char* text) {
 		fputs(text, f);
 		fclose(f);
 	} else {
-		printf("Ошибка записи в файл %s", msgfile);
+		printf("Ошибка записи в файл %s\n", msgfile);
 		return 1;
 	}
 
 	f=fopen(echofile, "a");
 	if (f) {
-		fputs(echo, f);
+		fputs(msgid, f);
 		fputs("\n", f);
 		fclose(f);
 	} else {
-		printf("Ошибка добавления в файл %s", echofile);
+		printf("Ошибка добавления в файл %s\n", echofile);
 		return 1;
 	}
 	
-	printf("message saved ok: %s", msgid);
+	printf("message saved ok: %s\n", msgid);
 	return 0;
 }

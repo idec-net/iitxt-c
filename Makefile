@@ -2,7 +2,7 @@ CC=gcc
 CFLAGS=-ggdb -std=c11
 
 all:
-	mkdir -p echo msg out
+	mkdir -p echo msg out sent
 	${CC} ${CFLAGS} view.c -o view
 	${CC} ${CFLAGS} write.c -o write
 	${CC} ${CFLAGS} send.c -o send -lcurl

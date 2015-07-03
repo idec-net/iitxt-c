@@ -10,6 +10,7 @@ char** dirs;
 DIR *tossesdir;
 struct dirent *filename;
 int filescount=0, i, result;
+int MAXFILES=512; // максимальное количество файлов в out/
 FILE *f;
 
 int comp(const void *a, const void *b) { 
@@ -21,7 +22,7 @@ int comp(const void *a, const void *b) {
 int main() {
 	strcat(adress, "u/point");
 	tossesdir=opendir("out/");
-	dirs=(char**)malloc(sizeof(char*)*512);
+	dirs=(char**)malloc(sizeof(char*)*MAXFILES);
 
 	while((filename=readdir(tossesdir))!=NULL) {
 		if (
@@ -32,7 +33,7 @@ int main() {
 			strcpy(dirs[filescount++], filename->d_name);
 		}
 	}
-	qsort(dirs, filescount, sizeof(dirs[0]), comp);
+	qsort(dirs, filescount, sizeof(char*), comp); // сортируем тоссы; точнее, пытаемся
 	
 	if (filescount==0) return 0;
 	
@@ -40,7 +41,6 @@ int main() {
 		char* tossfname=(char*)malloc(sizeof(char)*(strlen(dirs[i])+5));
 		strcpy(tossfname, "out/");
 		strcat(tossfname, dirs[i]);
-		free(dirs[i]);
 		
 		f=fopen(tossfname, "r");
 		if (f==NULL) {
@@ -48,13 +48,14 @@ int main() {
 			continue;
 		}
 		
-		int size1=fsize(tossfname);
-
-		char* rawtext=(char*)malloc(size1+1);
-		fread(rawtext, size1, 1, f);
+		int size=fsize(tossfname);
+		
+		char* rawtext=(char*)malloc(size+1);
+		fread(rawtext, size, 1, f);
 		fclose(f);
 		
 		char* code=b64c(rawtext);
+		free(rawtext);
 
 		char* request=(char*)malloc(sizeof(char)*(strlen(code)+strlen(authstr)+13));
 		strcpy(request, "tmsg=");
@@ -66,8 +67,20 @@ int main() {
 		printf(" %s: %d\n", tossfname, result);
 		
 		if(result == 0) {
-			unlink(tossfname);
+			// перемещаем отправленное сообщение в sent/ (ну не удалять же его)
+			char* newfname=(char*)malloc(sizeof(char)*(strlen(dirs[i])+6));
+			strcpy(newfname, "sent/");
+			strcat(newfname, dirs[i]);
+			
+			rename(tossfname, newfname);
+			free(newfname);
 		}
 	}
+	// освобождаем память... только вот смысл?
+	for (i=0;i<filescount; i++) {
+		free(dirs[i]);
+	}
+	free(dirs);
+
 	return 0;
 }

@@ -56,21 +56,7 @@ void saveBundle (char* echoarea, char* raw_bundle) {
 		} else {
 			if((next_part=strtok(NULL, ":"))!=NULL) {
 				// расшифровываем base64 и сохраняем бандл
-				// увы, содержимое этого блока - жуткий костыль =(
-				FILE *b64cache=fopen("nextmessage", "w+");
-				fwrite(next_part, strlen(next_part), 1, b64cache);
-				rewind(b64cache);
-				FILE *message=fopen(fname, "w");
-				decode(b64cache, message);
-
-				fclose(b64cache);
-				fclose(message);
-				char echofile[80]="echo/";
-				strcat(echofile, echoarea);
-				FILE* echo=fopen(echofile, "a");
-				fwrite(msgid, strlen(msgid), 1, echo);
-				fwrite("\n", 1, 1, echo);
-				fclose(echo);
+				savemsg(msgid, echoarea, b64d(next_part));
 			} else {
 				printf("E: бандл %s повреждён\n", msgid);
 			}
@@ -116,7 +102,8 @@ int fetch_messages (char* adress, char** echoesToFetch, int echoesCount) {
 				remote_msglist.index=(char**)realloc(remote_msglist.index, sizeof(char*)*(remote_msglist.length+1));
 				
 				remote_msglist.index[remote_msglist.length]=(char*)malloc(sizeof(char)*21);
-				strcpy(remote_msglist.index[remote_msglist.length++], nextmessage);
+				strcpy(remote_msglist.index[remote_msglist.length], nextmessage);
+				remote_msglist.index[remote_msglist.length++][20]='\0';
 			}
 
 			struct msglist local_msglist=getLocalEcho(bundle_echoarea);
