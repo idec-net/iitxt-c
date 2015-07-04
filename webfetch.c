@@ -78,7 +78,7 @@ int fetch_messages (char* adress, char** echoesToFetch, int echoesCount) {
 		
 		if (!cached) {
 			printf("Не могу открыть файл кэша\n");
-			exit(1);
+			return 1;
 		}
 	
 		int gotEcho=getFile(server_msglist_request, cached, NULL);
@@ -145,8 +145,9 @@ int fetch_messages (char* adress, char** echoesToFetch, int echoesCount) {
 						int bundle_cache_size=ftell(bundle_cached);
 						rewind(bundle_cached); // опять подготовка к чтению (идём к началу)
 		
-						char* raw_bundle=(char*)malloc(bundle_cache_size);
+						char* raw_bundle=(char*)malloc(bundle_cache_size+1);
 						fread(raw_bundle, bundle_cache_size, 1, bundle_cached); // friendship^Wfread is magic
+						raw_bundle[bundle_cache_size]='\0';
 						fclose(bundle_cached);
 						
 						saveBundle(bundle_echoarea, raw_bundle); // а эта функция распарсит бандл и попытается сохранить

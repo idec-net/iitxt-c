@@ -11,7 +11,6 @@ DIR *tossesdir;
 struct dirent *filename;
 int filescount=0, i, result;
 int MAXFILES=512; // максимальное количество файлов в out/
-FILE *f;
 
 int comp(const void *a, const void *b) { 
 	const char *u = (const char *)a;
@@ -42,26 +41,24 @@ int main() {
 		strcpy(tossfname, "out/");
 		strcat(tossfname, dirs[i]);
 		
-		f=fopen(tossfname, "r");
-		if (f==NULL) {
-			printf("Не могу открыть файл %s\n", tossfname);
+		char* rawtext=file_get_contents(tossfname);
+		
+		if (rawtext==NULL) {
 			continue;
 		}
 		
-		int size=fsize(tossfname);
-		
-		char* rawtext=(char*)malloc(size+1);
-		fread(rawtext, size, 1, f);
-		fclose(f);
-		
-		char* code=b64c(rawtext);
+		char* code=curl_easy_escape(curl, b64c(rawtext), 0);
 		free(rawtext);
+		char* encoded_authstr=curl_easy_escape(curl, authstr, 0);
 
-		char* request=(char*)malloc(sizeof(char)*(strlen(code)+strlen(authstr)+13));
+		char* request=(char*)malloc(sizeof(char)*(strlen(code)+strlen(encoded_authstr)+13));
 		strcpy(request, "tmsg=");
 		strcat(request, code);
 		strcat(request, "&pauth=");
-		strcat(request, authstr);
+		strcat(request, encoded_authstr);
+
+		curl_free(code);
+		curl_free(encoded_authstr);
 		
 		result=getFile(adress, NULL, request);
 		printf(" %s: %d\n", tossfname, result);

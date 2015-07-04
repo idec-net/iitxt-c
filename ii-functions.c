@@ -46,22 +46,29 @@ struct msglist getLocalEcho(char* echoarea) {
 	return result;
 }
 
-char* getRawMsg(char* msgid) {
-	char msgfile[40]="msg/";
-	strcat(msgfile, msgid);
-	FILE *file=fopen(msgfile, "r");
+char* file_get_contents(char* filename) {
+	// аналог одноимённой функции в php
+	FILE *file=fopen(filename, "r");
 	if(!file) {
-		printf("Не могу открыть файл %s\n", msgfile);
-		exit(1);
+		printf("Не могу открыть файл %s\n", filename);
+		return NULL;
 	}
 	
-	int size=fsize(msgfile);
+	int size=fsize(filename);
 	
 	char* result=(char*)malloc(size+1);
 	fread(result, size, 1, file);
 	fclose(file);
-
+	result[size]='\0';
+	
 	return result;
+}
+
+char* getRawMsg(char* msgid) {
+	char msgfile[40]="msg/";
+	strcat(msgfile, msgid);
+	
+	return file_get_contents(msgfile);
 }
 
 char* getRepto_from_str(char* tagstring) {
