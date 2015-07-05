@@ -2,9 +2,8 @@
 #include <unistd.h>
 #include "network-functions.c"
 #include "ii-functions.c"
+#include "getcfg.c"
 // toss file format is raw msgline, NOT base64
-
-char authstr[]="your_authstr";
 
 char** dirs;
 DIR *tossesdir;
@@ -19,10 +18,17 @@ int comp(const void *a, const void *b) {
 }
 
 int main() {
-	strcat(adress, "u/point");
+	getcfg();
+	
+	// выделяем ещё памяти для адреса, чтобы засунуть туда u/point
+	char* send_adress=(char*)malloc(sizeof(char*)*(strlen(adress)+8));
+	
+	strcpy(send_adress, adress);
+	strcat(send_adress, "u/point");
+	
 	tossesdir=opendir("out/");
 	dirs=(char**)malloc(sizeof(char*)*MAXFILES);
-
+	
 	while((filename=readdir(tossesdir))!=NULL) {
 		if (
 			(strcmp(filename->d_name, ".")!=0) &&
@@ -36,6 +42,8 @@ int main() {
 	
 	if (filescount==0) return 0;
 	
+	char* encoded_authstr=curl_easy_escape(curl, authstr, 0);
+
 	for (i=0;i<filescount;i++) {
 		char* tossfname=(char*)malloc(sizeof(char)*(strlen(dirs[i])+5));
 		strcpy(tossfname, "out/");
@@ -49,7 +57,6 @@ int main() {
 		
 		char* code=curl_easy_escape(curl, b64c(rawtext), 0);
 		free(rawtext);
-		char* encoded_authstr=curl_easy_escape(curl, authstr, 0);
 
 		char* request=(char*)malloc(sizeof(char)*(strlen(code)+strlen(encoded_authstr)+13));
 		strcpy(request, "tmsg=");
@@ -58,9 +65,8 @@ int main() {
 		strcat(request, encoded_authstr);
 
 		curl_free(code);
-		curl_free(encoded_authstr);
 		
-		result=getFile(adress, NULL, request);
+		result=getFile(send_adress, NULL, request);
 		printf(" %s: %d\n", tossfname, result);
 		
 		if(result == 0) {
@@ -78,6 +84,7 @@ int main() {
 		free(dirs[i]);
 	}
 	free(dirs);
+	curl_free(encoded_authstr);
 
 	return 0;
 }

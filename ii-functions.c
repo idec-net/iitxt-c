@@ -6,44 +6,10 @@
 #include "ii.h"
 #include "b64.c"
 
-char adress[100]="http://ii-net.tk/ii/ii-point.php?q=/";
-
 int fsize(char *name) {
 	struct stat st;
 	stat(name, &st);
 	return st.st_size;
-}
-
-struct msglist getLocalEcho(char* echoarea) {
-	// эта функция меня смущает. Хотя она была написана самой первой в клиенте =)
-	
-	char echofile[80]="echo/";
-	strcat(echofile, echoarea);
-
-	FILE *file=fopen(echofile, "r");
-
-	if (!file) {
-		printf("W: Не могу прочитать файл %s\n", echofile);
-		return (struct msglist){ NULL, 0 };
-	}
-	int size=fsize(echofile);
-	int echocount=0;
-
-	char* filestring=(char*)malloc(size+1);
-	fread(filestring, size, 1, file);
-	fclose(file);
-
-	char** p=NULL;
-	char* nextmsgid=strtok(filestring, "\n");
-
-	while(nextmsgid!=NULL) {
-		p=(char**)realloc(p, sizeof(char*)*(echocount+1));
-		p[echocount++]=nextmsgid;
-		nextmsgid=strtok(NULL, "\n");
-	}
-	
-	struct msglist result = {p, echocount};
-	return result;
 }
 
 char* file_get_contents(char* filename) {
@@ -62,6 +28,37 @@ char* file_get_contents(char* filename) {
 	result[size]='\0';
 	
 	return result;
+}
+
+struct msglist split(char* string, char* token) {
+	char** p=NULL;
+	char* nextstr=strtok(string, token);
+	int count=0;
+
+	while(nextstr!=NULL) {
+		p=(char**)realloc(p, sizeof(char*)*(count+1));
+		p[count++]=nextstr;
+		nextstr=strtok(NULL, token);
+	}
+	
+	struct msglist result = {p, count};
+	return result;
+}
+
+struct msglist getLocalEcho(char* echoarea) {
+	// эта функция меня смущает. Хотя она была написана самой первой в клиенте =)
+	
+	char echofile[80]="echo/";
+	strcat(echofile, echoarea);
+
+	char* filestring=file_get_contents(echofile);
+
+	if (!filestring) {
+		printf("W: Не могу прочитать файл %s\n", echofile);
+		return (struct msglist){ NULL, 0 };
+	}
+	
+	return split(filestring, "\n");
 }
 
 char* getRawMsg(char* msgid) {

@@ -1,6 +1,7 @@
 #include <unistd.h>
 #include "network-functions.c"
 #include "ii-functions.c"
+#include "getcfg.c"
 
 int bundle_maxsize=20;
 
@@ -160,12 +161,7 @@ int fetch_messages (char* adress, char** echoesToFetch, int echoesCount) {
 }
 
 int main() {
-	char** myEchoes=(char**)malloc(sizeof(char*)*2);
-	myEchoes[0]=(char*)malloc(sizeof(char)*30);
-	myEchoes[1]=(char*)malloc(sizeof(char)*30);
-
-	strcpy(myEchoes[0], "mlp.15");
-	strcpy(myEchoes[1], "ii.test.14");
+	getcfg();
 	
-	int fetched=fetch_messages(&adress[0], myEchoes, 2);
+	int fetched=fetch_messages(adress, subscriptions.index, subscriptions.length);
 }
