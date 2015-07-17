@@ -1,9 +1,10 @@
 #include <time.h>
-#include <unistd.h>
+#include <assert.h>
 #include "ii-functions.c"
 
 char template[100];
-char msgfile[50];
+char full_msgfile[200];
+char msgfile[40];
 char subj2[250];
 
 char* frmSubj(char* subj) {
@@ -21,18 +22,20 @@ void edit (char* text) {
 	struct tm * mytime;
 	time(&rawtime);
 	mytime=localtime(&rawtime);
-	
-	strftime(msgfile, 60, "out/%G%m%d%H%M%S.toss", mytime);
 
-	FILE *f=fopen(msgfile, "w");
+	strcat(full_msgfile, tossesdir);
+	strftime(msgfile, 60, "%G%m%d%H%M%S.toss", mytime);
+	strcat(full_msgfile, msgfile);
+
+	FILE *f=fopen(full_msgfile, "w");
 	if (!f) {
-		printf("Не могу открыть файл %s для записи\n", msgfile);
+		printf("Не могу открыть файл %s для записи\n", full_msgfile);
 		exit(1);
 	}
 	fputs(text, f);
 	fclose(f);
 
-	execl("/usr/bin/vim", "vim", msgfile, (char*)0);
+	execl("/usr/bin/vim", "vim", full_msgfile, (char*)0);
 }
 
 void writeNew (char* echoarea) {
@@ -63,6 +66,8 @@ int main (int argc, char** argv) {
 		return 1;
 	}
 	
+	ii_base_init();
+
 	char* echoarea=argv[1];
 
 	if (argc==2) {

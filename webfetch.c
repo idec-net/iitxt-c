@@ -1,9 +1,7 @@
-#include <unistd.h>
 #include "network-functions.c"
 #include "ii-functions.c"
-#include "getcfg.c"
 
-int bundle_maxsize=20;
+int bundle_maxsize=20; // скачиваем по 20 собщений за раз
 
 static int i, j;
 
@@ -46,7 +44,9 @@ void saveBundle (char* echoarea, char* raw_bundle) {
 	}
 	
 	for (i=0;i<linescount;i++) {
-		char fname[80]="msg/";
+		char fname[160]="\0";
+		strcat(fname, msgdir);
+
 		char* next_part=strtok(lines[i], ":");
 		char* msgid=next_part;
 
@@ -67,7 +67,18 @@ void saveBundle (char* echoarea, char* raw_bundle) {
 
 int fetch_messages (char* adress, char** echoesToFetch, int echoesCount) {
 	char* server_msglist_request;
-	
+
+	// инициализируем имена файлов для кэша
+
+	char indexcache_fname[100]="\0";
+	char bundlecache_fname[100]="\0";
+
+	strcat(indexcache_fname, datadir);
+	strcat(bundlecache_fname, datadir);
+
+	strcat(indexcache_fname, "cache-first");
+	strcat(bundlecache_fname, "cache-bundle");
+
 	for (i=0; i<echoesCount; i++) {
 		server_msglist_request=(char*)malloc(sizeof(char)*(strlen(adress)+strlen(echoesToFetch[i])+5));
 		
@@ -75,7 +86,7 @@ int fetch_messages (char* adress, char** echoesToFetch, int echoesCount) {
 		strcat(server_msglist_request, "u/e/");
 		strcat(server_msglist_request, echoesToFetch[i]);
 		
-		FILE* cached=fopen("cache-first", "wb+");
+		FILE* cached=fopen(indexcache_fname, "wb+");
 		
 		if (!cached) {
 			printf("Не могу открыть файл кэша\n");
@@ -136,7 +147,7 @@ int fetch_messages (char* adress, char** echoesToFetch, int echoesCount) {
 						strcat(server_bundle_request, difference.index[j*bundle_maxsize+a]);
 					}
 					
-					FILE *bundle_cached=fopen("cache-bundle", "w+");
+					FILE *bundle_cached=fopen(bundlecache_fname, "w+");
 					if (!bundle_cached) {
 						printf("%s\n", "Не могу открыть файл кэша бандла");
 					} else {
@@ -161,7 +172,7 @@ int fetch_messages (char* adress, char** echoesToFetch, int echoesCount) {
 }
 
 int main() {
-	getcfg();
+	ii_base_init();
 	
 	int fetched=fetch_messages(adress, subscriptions.index, subscriptions.length);
 }

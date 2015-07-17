@@ -1,12 +1,10 @@
 #include <dirent.h>
-#include <unistd.h>
 #include "network-functions.c"
 #include "ii-functions.c"
-#include "getcfg.c"
 // toss file format is raw msgline, NOT base64
 
 char** dirs;
-DIR *tossesdir;
+DIR *dir_with_tosses;
 struct dirent *filename;
 int filescount=0, i, result;
 int MAXFILES=512; // максимальное количество файлов в out/
@@ -18,7 +16,7 @@ int comp(const void *a, const void *b) {
 }
 
 int main() {
-	getcfg();
+	ii_base_init();
 	
 	// выделяем ещё памяти для адреса, чтобы засунуть туда u/point
 	char* send_adress=(char*)malloc(sizeof(char*)*(strlen(adress)+8));
@@ -26,10 +24,10 @@ int main() {
 	strcpy(send_adress, adress);
 	strcat(send_adress, "u/point");
 	
-	tossesdir=opendir("out/");
+	dir_with_tosses=opendir(tossesdir);
 	dirs=(char**)malloc(sizeof(char*)*MAXFILES);
 	
-	while((filename=readdir(tossesdir))!=NULL) {
+	while((filename=readdir(dir_with_tosses))!=NULL) {
 		if (
 			(strcmp(filename->d_name, ".")!=0) &&
 			(strcmp(filename->d_name, "..")!=0)
@@ -45,8 +43,8 @@ int main() {
 	char* encoded_authstr=curl_easy_escape(curl, authstr, 0);
 
 	for (i=0;i<filescount;i++) {
-		char* tossfname=(char*)malloc(sizeof(char)*(strlen(dirs[i])+5));
-		strcpy(tossfname, "out/");
+		char* tossfname=(char*)malloc(sizeof(char)*(strlen(dirs[i])+strlen(tossesdir)));
+		strcpy(tossfname, tossesdir);
 		strcat(tossfname, dirs[i]);
 		
 		char* rawtext=file_get_contents(tossfname);
@@ -71,8 +69,8 @@ int main() {
 		
 		if(result == 0) {
 			// перемещаем отправленное сообщение в sent/ (ну не удалять же его)
-			char* newfname=(char*)malloc(sizeof(char)*(strlen(dirs[i])+6));
-			strcpy(newfname, "sent/");
+			char* newfname=(char*)malloc(sizeof(char)*(strlen(dirs[i])+strlen(sentdir)+1));
+			strcpy(newfname, sentdir);
 			strcat(newfname, dirs[i]);
 			
 			rename(tossfname, newfname);

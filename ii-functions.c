@@ -1,60 +1,17 @@
-#include <stdio.h>
-#include <sys/stat.h>
-#include <string.h>
-#include <stdlib.h>
-#include <assert.h>
 #include "ii.h"
+#include "file-functions.c"
 #include "b64.c"
-
-int fsize(char *name) {
-	struct stat st;
-	stat(name, &st);
-	return st.st_size;
-}
-
-char* file_get_contents(char* filename) {
-	// аналог одноимённой функции в php
-	FILE *file=fopen(filename, "r");
-	if(!file) {
-		printf("Не могу открыть файл %s\n", filename);
-		return NULL;
-	}
-	
-	int size=fsize(filename);
-	
-	char* result=(char*)malloc(size+1);
-	fread(result, size, 1, file);
-	fclose(file);
-	result[size]='\0';
-	
-	return result;
-}
-
-struct msglist split(char* string, char* token) {
-	char** p=NULL;
-	char* nextstr=strtok(string, token);
-	int count=0;
-
-	while(nextstr!=NULL) {
-		p=(char**)realloc(p, sizeof(char*)*(count+1));
-		p[count++]=nextstr;
-		nextstr=strtok(NULL, token);
-	}
-	
-	struct msglist result = {p, count};
-	return result;
-}
+#include "getcfg.c"
 
 struct msglist getLocalEcho(char* echoarea) {
-	// эта функция меня смущает. Хотя она была написана самой первой в клиенте =)
-	
-	char echofile[80]="echo/";
+	char echofile[200]="\0";
+	strcat(echofile, indexdir);
 	strcat(echofile, echoarea);
 
 	char* filestring=file_get_contents(echofile);
 
 	if (!filestring) {
-		printf("W: Не могу прочитать файл %s\n", echofile);
+		printf("Эха, наверное, пуста: %s\n", echoarea);
 		return (struct msglist){ NULL, 0 };
 	}
 	
@@ -62,7 +19,8 @@ struct msglist getLocalEcho(char* echoarea) {
 }
 
 char* getRawMsg(char* msgid) {
-	char msgfile[40]="msg/";
+	char msgfile[160]="\0";
+	strcat(msgfile, msgdir);
 	strcat(msgfile, msgid);
 	
 	return file_get_contents(msgfile);
@@ -110,10 +68,12 @@ struct message getMsg(char* msgid) {
 }
 
 int savemsg(char* msgid, char* echo, char* text) {
-	char msgfile[40]="msg/";
+	char msgfile[160]="\0";
+	strcat(msgfile, msgdir);
 	strcat(msgfile, msgid);
 
-	char echofile[80]="echo/";
+	char echofile[200]="\0";
+	strcat(echofile, indexdir);
 	strcat(echofile, echo);
 
 	FILE *f=fopen(msgfile, "w");
@@ -135,6 +95,6 @@ int savemsg(char* msgid, char* echo, char* text) {
 		return 1;
 	}
 	
-	printf("message saved ok: %s\n", msgid);
+	printf("msg ok: %s\n", msgid);
 	return 0;
 }

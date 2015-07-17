@@ -18,6 +18,7 @@ int main(int argc, char** argv) {
 		printf("Usage: viewer <echoarea>\nor viewer <echoarea> len\nor viewer <echoarea> <number> (count from 0)\nor viewer <echoarea> <format>\n    where format is\n    l10 - last 10 messages\n    f5 - first 5 messages\n    r2:4 - from 3rd to 5th (including)\n");
 		return 1;
 	}
+	ii_base_init();
 
 	struct msglist buf=getLocalEcho(echoname);
 	int last=(buf.length)-1;
