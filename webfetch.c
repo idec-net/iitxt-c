@@ -200,7 +200,6 @@ int main() {
 		fclose(newmsg);
 	}
 	/*	TODO:
-		поправить README (добавив про местоположение конфига и newmsg)
 		изменить Makefile, добавив туда цель install и uninstall
 	*/
 }
