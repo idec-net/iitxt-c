@@ -1,7 +1,7 @@
 static char* adress;
 static char* authstr;
 
-static struct msglist subscriptions;
+static struct list subscriptions;
 
 char __indexdir[]="echo/";
 char __msgdir[]="msg/";
@@ -89,7 +89,7 @@ void ii_base_init() {
 	}
 
 	char* rawfile=file_get_contents(configfile);
-	struct msglist lines=split(rawfile, "\n");
+	struct list lines=split(rawfile, "\n");
 
 	adress=(lines.length>0) ? lines.index[0] : "http://ii-net.tk/ii/ii-point.php?q=/";
 	authstr=(lines.length>1) ? lines.index[1] : "your_authstr";

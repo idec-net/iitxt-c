@@ -45,10 +45,10 @@ void writeNew (char* echoarea) {
 	edit(&template[0]);
 }
 
-void answer (char* echoarea, char* msgid) {
+void answer (char* msgid) {
 	struct message msg=getMsg(msgid);
 
-	strcat(template, echoarea);
+	strcat(template, msg.echoarea);
 	strcat(template, "\n");
 	strcat(template, msg.msgfrom);
 	strcat(template, "\n");
@@ -74,10 +74,10 @@ int main (int argc, char** argv) {
 		writeNew(echoarea);
 	} else {
 		int number=0;
-		struct msglist msgids=getLocalEcho(echoarea);
+		struct list msgids=getLocalEcho(echoarea);
 		sscanf(argv[2], "%d", &number);
 		assert(number>=0 && number<=((msgids.length)-1));
 		
-		answer(echoarea, msgids.index[number]);
+		answer(msgids.index[number]);
 	}
 }

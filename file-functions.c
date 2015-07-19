@@ -31,18 +31,27 @@ char* file_get_contents(char* filename) {
 	return result;
 }
 
-struct msglist split(char* string, char* token) {
-	char** p=NULL;
+void list_append(struct list *elements, char* string) {
+	(*elements).index=(char**)realloc((*elements).index, sizeof(char*)*((*elements).length+1));
+	(*elements).index[(*elements).length++]=string;
+}
+
+void list_merge(struct list *dest, struct list *src) {
+	int i;
+	for (i=0; i<(*src).length; i++) {
+		list_append(dest, (*src).index[i]);
+	}
+}
+
+struct list split(char* string, char* token) {
+	struct list result={NULL, 0};
 	char* nextstr=strtok(string, token);
-	int count=0;
 
 	while(nextstr!=NULL) {
-		p=(char**)realloc(p, sizeof(char*)*(count+1));
-		p[count++]=nextstr;
+		list_append(&result, nextstr);
 		nextstr=strtok(NULL, token);
 	}
 	
-	struct msglist result = {p, count};
 	return result;
 }
 

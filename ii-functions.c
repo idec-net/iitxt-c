@@ -1,9 +1,25 @@
-#include "ii.h"
+struct list {
+	char** index;
+	int length;
+};
+
+struct message {
+	char* tags;
+	char* repto;
+	char* echoarea;
+	long long int date;
+	char* msgfrom;
+	char* addr;
+	char* msgto;
+	char* subj;
+	char* msg;
+};
+
 #include "file-functions.c"
 #include "b64.c"
 #include "getcfg.c"
 
-struct msglist getLocalEcho(char* echoarea) {
+struct list getLocalEcho(char* echoarea) {
 	char echofile[200]="\0";
 	strcat(echofile, indexdir);
 	strcat(echofile, echoarea);
@@ -12,7 +28,7 @@ struct msglist getLocalEcho(char* echoarea) {
 
 	if (!filestring) {
 		printf("Эха, наверное, пуста: %s\n", echoarea);
-		return (struct msglist){ NULL, 0 };
+		return (struct list){ NULL, 0 };
 	}
 	
 	return split(filestring, "\n");
@@ -82,7 +98,7 @@ int savemsg(char* msgid, char* echo, char* text) {
 		fclose(f);
 	} else {
 		printf("Ошибка записи в файл %s\n", msgfile);
-		return 1;
+		return 0;
 	}
 
 	f=fopen(echofile, "a");
@@ -92,9 +108,9 @@ int savemsg(char* msgid, char* echo, char* text) {
 		fclose(f);
 	} else {
 		printf("Ошибка добавления в файл %s\n", echofile);
-		return 1;
+		return 0;
 	}
 	
 	printf("msg ok: %s\n", msgid);
-	return 0;
+	return 1;
 }

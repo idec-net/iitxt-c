@@ -20,7 +20,7 @@ int main(int argc, char** argv) {
 	}
 	ii_base_init();
 
-	struct msglist buf=getLocalEcho(echoname);
+	struct list buf=getLocalEcho(echoname);
 	int last=(buf.length)-1;
 
 	if (second) {

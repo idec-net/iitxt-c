@@ -5,9 +5,9 @@ int bundle_maxsize=20; // скачиваем по 20 собщений за ра�
 
 static int i, j;
 
-struct msglist messages_difference(struct msglist first, struct msglist second) {
-	char** index=NULL;
-	int count=0, j, a, found;
+struct list messages_difference(struct list first, struct list second) {
+	struct list result={NULL, 0};
+	int j, a, found;
 
 	for (j=0;j<first.length;j++) {
 		found=0;
@@ -18,18 +18,17 @@ struct msglist messages_difference(struct msglist first, struct msglist second) 
 			}
 		}
 		if (found!=1) {
-			index=(char**)realloc(index, sizeof(char*)*(count+1));
-			index[count++]=first.index[j];
+			list_append(&result, first.index[j]);
 		}
 	}
 
-	struct msglist result = { index, count };
 	return result;
 }
 
-void saveBundle (char* echoarea, char* raw_bundle) {
+struct list saveBundle (char* echoarea, char* raw_bundle) {
 	char** lines=NULL;
 	int linescount=0, i;
+	struct list result={NULL, 0};
 
 	char* nextline=strtok(raw_bundle, "\n");
 	
@@ -57,16 +56,23 @@ void saveBundle (char* echoarea, char* raw_bundle) {
 		} else {
 			if((next_part=strtok(NULL, ":"))!=NULL) {
 				// расшифровываем base64 и сохраняем бандл
-				savemsg(msgid, echoarea, b64d(next_part));
+				int saved=savemsg(msgid, echoarea, b64d(next_part));
+
+				if (saved) {
+					// если сообщение сохранили, то добавляем его в список
+					list_append(&result, msgid);
+				}
 			} else {
 				printf("E: бандл %s повреждён\n", msgid);
 			}
 		}
 	}
+	return result;
 }
 
-int fetch_messages (char* adress, char** echoesToFetch, int echoesCount) {
+struct list fetch_messages (char* adress, struct list echoesToFetch) {
 	char* server_msglist_request;
+	struct list saved_messages={NULL, 0}; // список сообщений, которые в итоге будут сохранены
 
 	// инициализируем имена файлов для кэша
 
@@ -79,18 +85,18 @@ int fetch_messages (char* adress, char** echoesToFetch, int echoesCount) {
 	strcat(indexcache_fname, "cache-first");
 	strcat(bundlecache_fname, "cache-bundle");
 
-	for (i=0; i<echoesCount; i++) {
-		server_msglist_request=(char*)malloc(sizeof(char)*(strlen(adress)+strlen(echoesToFetch[i])+5));
+	for (i=0; i<echoesToFetch.length; i++) {
+		server_msglist_request=(char*)malloc(sizeof(char)*(strlen(adress)+strlen(echoesToFetch.index[i])+5));
 		
 		strcpy(server_msglist_request, adress);
 		strcat(server_msglist_request, "u/e/");
-		strcat(server_msglist_request, echoesToFetch[i]);
+		strcat(server_msglist_request, echoesToFetch.index[i]);
 		
 		FILE* cached=fopen(indexcache_fname, "wb+");
 		
 		if (!cached) {
 			printf("Не могу открыть файл кэша\n");
-			return 1;
+			return saved_messages;
 		}
 	
 		int gotEcho=getFile(server_msglist_request, cached, NULL);
@@ -104,7 +110,7 @@ int fetch_messages (char* adress, char** echoesToFetch, int echoesCount) {
 		
 		char* bundle_echoarea=strtok(raw_echobundle, "\n");
 		if (bundle_echoarea!=NULL) {
-			struct msglist remote_msglist;
+			struct list remote_msglist;
 			remote_msglist.index=(char**)malloc(sizeof(char*));
 
 			char* nextmessage;
@@ -118,8 +124,8 @@ int fetch_messages (char* adress, char** echoesToFetch, int echoesCount) {
 				remote_msglist.index[remote_msglist.length++][20]='\0';
 			}
 
-			struct msglist local_msglist=getLocalEcho(bundle_echoarea);
-			struct msglist difference=messages_difference(remote_msglist, local_msglist);
+			struct list local_msglist=getLocalEcho(bundle_echoarea);
+			struct list difference=messages_difference(remote_msglist, local_msglist);
 
 			if (difference.length>0) {
 				int divideCount;
@@ -149,7 +155,7 @@ int fetch_messages (char* adress, char** echoesToFetch, int echoesCount) {
 					
 					FILE *bundle_cached=fopen(bundlecache_fname, "w+");
 					if (!bundle_cached) {
-						printf("%s\n", "Не могу открыть файл кэша бандла");
+						printf("Не могу открыть файл кэша бандла\n");
 					} else {
 						// скачиваем бандл сообщений
 						int gotBundle=getFile(server_bundle_request, bundle_cached, NULL);
@@ -162,17 +168,39 @@ int fetch_messages (char* adress, char** echoesToFetch, int echoesCount) {
 						raw_bundle[bundle_cache_size]='\0';
 						fclose(bundle_cached);
 						
-						saveBundle(bundle_echoarea, raw_bundle); // а эта функция распарсит бандл и попытается сохранить
+						struct list bundle_success=saveBundle(bundle_echoarea, raw_bundle); // а эта функция распарсит бандл и попытается сохранить
+						if (bundle_success.length>0) {
+							list_merge(&saved_messages, &bundle_success);
+						}
 					}
 					free (server_bundle_request);
 				}
 			}
 		}
 	}
+	return saved_messages;
 }
 
 int main() {
 	ii_base_init();
 	
-	int fetched=fetch_messages(adress, subscriptions.index, subscriptions.length);
+	struct list fetched=fetch_messages(adress, subscriptions);
+
+	if (fetched.length>0) {
+		char newmsg_filename[130];
+		strcpy(newmsg_filename, indexdir);
+		strcat(newmsg_filename, "newmsg");
+
+		FILE* newmsg=fopen(newmsg_filename, "wb");
+		int i;
+		for (i=0; i<fetched.length; i++) {
+			fputs(fetched.index[i], newmsg);
+			fputs("\n", newmsg);
+		}
+		fclose(newmsg);
+	}
+	/*	TODO:
+		поправить README (добавив про местоположение конфига и newmsg)
+		изменить Makefile, добавив туда цель install и uninstall
+	*/
 }
