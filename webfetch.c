@@ -199,7 +199,4 @@ int main() {
 		}
 		fclose(newmsg);
 	}
-	/*	TODO:
-		изменить Makefile, добавив туда цель install и uninstall
-	*/
 }
