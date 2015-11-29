@@ -46,7 +46,7 @@ void writeNew (char* echoarea) {
 }
 
 void answer (char* msgid) {
-	struct message msg=getMsg(msgid);
+	struct message msg=parseMessage(getRawMsg(msgid));
 
 	strcat(template, msg.echoarea);
 	strcat(template, "\n");

@@ -17,7 +17,7 @@ struct list {
 };
 
 struct message {
-	char* tags;
+	struct list tags;
 	char* repto;
 	char* echoarea;
 	long long int date;
@@ -31,6 +31,8 @@ struct message {
 #include "file-functions.c"
 #include "b64.c"
 #include "getcfg.c"
+
+const struct message nomessage = {{NULL, 0}, NULL, "none", 0, "", "", "", "", NULL};
 
 struct list getLocalEcho(char* echoarea) {
 	char echofile[200]="\0";
@@ -55,44 +57,74 @@ char* getRawMsg(char* msgid) {
 	return file_get_contents(msgfile);
 }
 
-char* getRepto_from_str(char* tagstring) {
-	// not implemented
-	char* result=tagstring;
+struct list parseTags(char* tagstring) {
+	struct list result={NULL, 0};
+
+	result=split(tagstring, "/");
+	if (result.length%2 == 1) {
+		result.length--;
+		free(result.index[result.length-1]);
+	}
+
 	return result;
 }
 
-struct message getMsg(char* msgid) {
+char* getRepto_from_tags(struct list tags) {
+	int i;
+	if (tags.length <= 1) return NULL; // так вменяемого результата точно не будет
+
+	for (i=0; i<tags.length-1; i+=2) {
+		if (strcmp(tags.index[i], "repto") == 0) {
+			// выхода за границы массива не будет из-за условия цикла i<tags.length-1
+			return tags.index[i+1];
+		}
+	}
+	return NULL;
+}
+
+struct message parseMessage(char* rawmsg) {
 	struct message result;
-	char* rawmsg=getRawMsg(msgid);
-	
-	char* nextstr=strtok(rawmsg, "\n");
-	result.tags=(nextstr!=NULL)?nextstr:"";
-	
-	result.repto=getRepto_from_str(result.tags);
+	struct list strings=split(rawmsg, "\n");
 
-	nextstr=strtok(NULL, "\n");
-	result.echoarea=(nextstr!=NULL)?nextstr:"null";
-	
-	nextstr=strtok(NULL, "\n");
-	char* msgdate=(nextstr!=NULL)?nextstr:"0";
-	sscanf(msgdate, "%lli", &(result.date));
+	if (strings.length >= 8) {
+		// значит сообщение, наверное, нормальное
+		// парсим
+		
+		int last=strings.length-1;
+		int i;
+		// делаем заготовку для пустой строки. \0 нужен для strcat, чтобы не лезть куда попало
+		char* full=(char*)malloc(1);
+		*full='\0';
+		int last_length=1;
 
-	nextstr=strtok(NULL, "\n");
-	result.msgfrom=(nextstr!=NULL)?nextstr:"";
-	
-	nextstr=strtok(NULL, "\n");
-	result.addr=(nextstr!=NULL)?nextstr:"";
+		for (i=7; i<strings.length; i++) {
+			last_length += strlen(strings.index[i])+1;
+			full=(char*)realloc(full, last_length+1);
+			strcat(full, strings.index[i]);
 
-	nextstr=strtok(NULL, "\n");
-	result.msgto=(nextstr!=NULL)?nextstr:"";
+			if (i!=last) strcat(full, "\n"); // но если строка последняя, то перенос не добавляем
+			else full[last_length-1] = '\0';
+		}
 
-	nextstr=strtok(NULL, "\n");
-	result.subj=(nextstr!=NULL)?nextstr:"";
-	
-	/* not implemented
-	 	todo: добавить выделение памяти, дабы избежать переполнения
-	 	ну ещё сделать парсинг самого сообщения (опять же, с памятью проверить)
-	*/
+		if (strlen(full)==0) {
+			free(full);
+			result.msg="no message";
+		} else {
+			result.msg=full;
+		}
+		
+		result.tags=parseTags(strings.index[0]);
+		result.repto=getRepto_from_tags(result.tags);
+		result.echoarea=strings.index[1];
+		sscanf(strings.index[2], "%lli", &(result.date));
+		result.msgfrom=strings.index[3];
+		result.addr=strings.index[4];
+		result.msgto=strings.index[5];
+		result.subj=strings.index[6];
+	} else {
+		result = nomessage;
+	}
+
 	return result;
 }
 
