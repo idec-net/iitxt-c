@@ -84,7 +84,7 @@ char* getRepto_from_tags(struct list tags) {
 
 struct message parseMessage(char* rawmsg) {
 	struct message result;
-	struct list strings=split(rawmsg, "\n");
+	struct list strings=split_empty(rawmsg, '\n');
 
 	if (strings.length >= 8) {
 		// значит сообщение, наверное, нормальное
@@ -97,7 +97,7 @@ struct message parseMessage(char* rawmsg) {
 		*full='\0';
 		int last_length=1;
 
-		for (i=7; i<strings.length; i++) {
+		for (i=8; i<strings.length; i++) {
 			last_length += strlen(strings.index[i])+1;
 			full=(char*)realloc(full, last_length+1);
 			strcat(full, strings.index[i]);

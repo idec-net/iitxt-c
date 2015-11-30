@@ -55,6 +55,30 @@ struct list split(char* string, char* token) {
 	return result;
 }
 
+struct list split_empty(char* string, char token) {
+	/*
+		версия функции split для односимвольного token
+		и, внимание, без выкидывания пустых строк
+	*/
+	struct list result={NULL, 0};
+	char* last_ptr=string;
+	char* nextstr;
+	char* end_ptr=string+strlen(string);
+	int len=0;
+
+	for (char* p=string; p<end_ptr; p++) {
+		if (*p==token || p==end_ptr-1) {
+			len=p-last_ptr;
+			nextstr=(char*)malloc(len+1);
+			memcpy(nextstr, last_ptr, len);
+			nextstr[len]='\0';
+			list_append(&result, nextstr);
+			last_ptr=p+1;
+		}
+	}
+	return result;
+}
+
 int dir_exists(char* dir) {
 	struct stat st;
 	
